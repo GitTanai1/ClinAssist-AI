@@ -1,0 +1,152 @@
+{% if error_message %}
+<section class="result-grid">
+  <article class="card card-lg">
+    <div class="card-head">
+      <div>
+        <p class="eyebrow">Request failed</p>
+        <h2>Something interrupted the agent run</h2>
+      </div>
+      <span class="state-text state-text-danger">Status: Error</span>
+    </div>
+    <p class="body-copy">{{ error_message }}</p>
+    <div class="alert alert-danger">
+      <strong>What to check:</strong>
+      <span>Make sure your `OPENAI_API_KEY` is set and that the server can reach external APIs.</span>
+    </div>
+  </article>
+
+  <aside class="stack">
+    <article class="card">
+      <p class="eyebrow">Question</p>
+      <p class="body-copy">{{ question }}</p>
+    </article>
+  </aside>
+</section>
+{% else %}
+<section class="result-grid">
+  <section class="main-stack">
+    <article class="card card-lg">
+      <div class="card-head">
+        <div>
+          <p class="eyebrow">Healthcare Response</p>
+          <h2>Patient-friendly answer</h2>
+        </div>
+        <span class="state-text {% if result.confidence == 'high' %}state-text-success{% elif result.confidence == 'medium' %}state-text-info{% else %}state-text-muted{% endif %}">
+          Confidence: {{ result.confidence | capitalize }}
+        </span>
+      </div>
+
+      <div class="question-row">
+        <span class="question-label">Question</span>
+        <p>{{ result.question }}</p>
+      </div>
+
+      <div class="answer-meta">
+        <div>
+          <span>Response mode</span>
+          <strong>Informational only</strong>
+        </div>
+        <div>
+          <span>Audience</span>
+          <strong>General patients</strong>
+        </div>
+        <div>
+          <span>Urgency flag</span>
+          <strong>{{ "Raised" if result.needs_urgent_care else "Not raised" }}</strong>
+        </div>
+      </div>
+
+      <div class="prose-block markdown-body">{{ result.answer_html | safe }}</div>
+
+      <div class="alert {% if result.needs_urgent_care %}alert-danger{% else %}alert-neutral{% endif %}">
+        <strong>Safety notice</strong>
+        <span>{{ result.disclaimer }}</span>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head compact">
+        <div>
+          <p class="eyebrow">Evidence</p>
+          <h3>{{ result.sources | length }} source{% if result.sources | length != 1 %}s{% endif %}</h3>
+        </div>
+      </div>
+      <div class="source-stack">
+        {% if result.sources %}
+          {% for source in result.sources %}
+          <article class="source-card">
+            <div class="source-head">
+              <div>
+                <p class="source-kicker">{{ source.source_type | capitalize }} source</p>
+                <h4>{{ source.title }}</h4>
+              </div>
+            </div>
+            <p>{{ source.snippet or "No summary available." }}</p>
+            <a href="{{ source.url }}" target="_blank" rel="noreferrer">Open source</a>
+          </article>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <p>No external sources were attached to this response.</p>
+          </div>
+        {% endif %}
+      </div>
+    </article>
+  </section>
+
+  <aside class="stack">
+    <article class="card">
+      <div class="card-head compact">
+        <div>
+          <p class="eyebrow">Workflow diagram</p>
+          <h3>Graph path</h3>
+        </div>
+      </div>
+      <div class="diagram-shell">
+        <pre class="mermaid workflow-mermaid">
+flowchart TD
+    start["Start"] --> planner["Planner"]
+    {% if result.retrieval_used %}
+    planner --> search["PubMed<br/>retrieval"]
+    search --> fallback["Fallback<br/>context"]
+    search --> answer["Answer<br/>draft"]
+    fallback --> answer
+    {% else %}
+    planner --> direct["Direct<br/>response"]
+    direct --> answer["Answer<br/>draft"]
+    {% endif %}
+    answer --> safety["{{ "Safety:<br/>urgent care" if result.needs_urgent_care else "Safety:<br/>standard check" }}"]
+    safety --> finish["End"]
+        </pre>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head compact">
+        <div>
+          <p class="eyebrow">Workflow</p>
+          <h3>Agent trace</h3>
+        </div>
+      </div>
+      <dl class="trace-grid">
+        <div class="trace-item">
+          <dt>Route</dt>
+          <dd>{{ "PubMed retrieval" if result.retrieval_used else "Direct answer" }}</dd>
+        </div>
+        <div class="trace-item">
+          <dt>Retrieval used</dt>
+          <dd>{{ "Yes" if result.retrieval_used else "No" }}</dd>
+        </div>
+        <div class="trace-item">
+          <dt>Confidence</dt>
+          <dd>{{ result.confidence | capitalize }}</dd>
+        </div>
+        <div class="trace-item trace-item-wide">
+          <dt>Planner summary</dt>
+          <dd>{{ result.reasoning_summary }}</dd>
+        </div>
+      </dl>
+    </article>
+  </aside>
+</section>
+{% endif %}
