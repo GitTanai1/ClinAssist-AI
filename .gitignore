@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.tmp_wheels/
+.tmp_wheels_all/
+.vercel/
