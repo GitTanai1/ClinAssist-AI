@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Healthcare Agent</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      window.mermaid = mermaid;
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        securityLevel: "loose",
+        themeVariables: {
+          background: "#111113",
+          primaryColor: "#101419",
+          primaryTextColor: "#f4f4f5",
+          primaryBorderColor: "rgba(110,168,255,0.42)",
+          lineColor: "rgba(124,189,255,0.88)",
+          secondaryColor: "#101419",
+          tertiaryColor: "#101419",
+          fontFamily: "IBM Plex Sans",
+        },
+        flowchart: {
+          curve: "natural",
+          nodeSpacing: 36,
+          rankSpacing: 42,
+          padding: 18,
+          htmlLabels: true,
+        },
+      });
+    </script>
+  </head>
+  <body class="theme-dark">
+    <main class="page-shell">
+      <section class="hero-shell">
+        <div class="hero-copy">
+          <h1>Clinical answers with source-backed reasoning.</h1>
+          <div class="hero-meta-rotator" aria-live="polite">
+            <span class="hero-meta-label">Built for</span>
+            <span
+              class="rotating-display hero-rotating-line"
+              data-rotate-items="PubMed-first retrieval|Web context fallback|Confidence-backed answers"
+            >PubMed-first retrieval</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="top-grid">
+        <section class="card composer-card">
+          <form
+            id="askForm"
+            class="composer-form"
+            hx-post="/ui/ask"
+            hx-target="#resultsShell"
+            hx-swap="innerHTML"
+          >
+            <div class="composer-head">
+              <div>
+                <p class="eyebrow">Ask the agent</p>
+                <h2>Healthcare question</h2>
+                <div class="section-copy rotator-inline" aria-live="polite">
+                  <span
+                    class="rotating-display"
+                    data-rotate-items="Describe symptoms clearly and naturally.|Ask for a simple explanation of a condition or term.|Request a source-backed overview before acting."
+                  >Describe symptoms clearly and naturally.</span>
+                </div>
+              </div>
+              <div id="requestState" class="request-state">Status: Ready</div>
+            </div>
+
+            <label class="sr-only" for="question">Healthcare question</label>
+            <textarea
+              id="question"
+              name="question"
+              rows="5"
+              placeholder="What are early symptoms of diabetes?"
+              required
+            ></textarea>
+
+            <div class="example-row" id="examples">
+              <button type="button" class="chip">What are early symptoms of diabetes?</button>
+              <button type="button" class="chip">How is hypertension usually managed?</button>
+              <button type="button" class="chip">Chest pain and shortness of breath, what should I do?</button>
+              <button type="button" class="chip">Explain HbA1c in simple words</button>
+            </div>
+
+            <div class="composer-actions">
+              <button id="submitBtn" class="primary-button" type="submit">
+                <span class="button-label">Run healthcare workflow</span>
+                <span class="button-loader" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+              </button>
+              <p class="support-copy">Press   <span> Ctrl/Cmd + Enter </span>  to submit quickly.</p>
+            </div>
+            <div id="loadingLane" class="loading-lane" aria-hidden="true">
+              <div class="loading-track">
+                <span class="loading-beam"></span>
+              </div>
+              <p class="loading-copy">Planning, retrieving, and composing a source-backed answer.</p>
+            </div>
+          </form>
+        </section>
+
+        <aside class="card overview-card">
+          <p class="eyebrow">Workflow diagram</p>
+          <h2>Stateful orchestration</h2>
+          <div class="diagram-shell">
+            <pre class="mermaid workflow-mermaid">
+flowchart TD
+    start["Start"] --> planner["Planner"]
+    planner --> direct["Direct<br/>response"]
+    planner --> search["PubMed<br/>retrieval"]
+    search --> fallback["Fallback<br/>context"]
+    search --> answer["Answer<br/>draft"]
+    fallback --> answer
+    direct --> answer
+    answer --> safety["Safety<br/>check"]
+    safety --> finish["End"]
+            </pre>
+          </div>
+        </aside>
+      </section>
+
+      <section id="resultsShell" class="result-shell">
+        <section class="result-grid">
+          <section class="main-stack">
+            <article class="card card-lg">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Awaiting input</p>
+                  <h2>Answer panel</h2>
+                </div>
+                <span class="state-text">Status: Idle</span>
+              </div>
+              <p class="body-copy">
+                Submit a question to generate a structured response with safety guidance, sources, and workflow details.
+              </p>
+              <div class="placeholder-metrics">
+                <div>
+                  <span>Mode</span>
+                  <strong>Informational only</strong>
+                </div>
+                <div>
+                  <span>Audience</span>
+                  <strong>General patients</strong>
+                </div>
+                <div>
+                  <span>Evidence</span>
+                  <strong>PubMed-first</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <p class="eyebrow">Evidence</p>
+              <h3>Sources will be attached under the answer once the run completes</h3>
+            </article>
+          </section>
+
+          <aside class="stack">
+            <article class="card">
+              <p class="eyebrow">Workflow</p>
+              <h3>Planner and retrieval state will appear here</h3>
+            </article>
+          </aside>
+        </section>
+      </section>
+
+      <template id="loadingTemplate">
+        <section class="result-grid loading-grid" aria-live="polite">
+          <section class="main-stack">
+            <article class="card card-lg loading-card">
+              <div class="card-head">
+                <div>
+                  <p class="eyebrow">Generating response</p>
+                  <h2>Preparing answer panel</h2>
+                </div>
+                <span class="state-text">Status: Running</span>
+              </div>
+              <div class="skeleton-stack">
+                <div class="skeleton skeleton-pill"></div>
+                <div class="skeleton skeleton-line skeleton-line-lg"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line skeleton-line-sm"></div>
+              </div>
+            </article>
+
+            <article class="card loading-card">
+              <p class="eyebrow">Evidence</p>
+              <div class="skeleton-stack">
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+              </div>
+            </article>
+          </section>
+
+          <aside class="stack">
+            <article class="card loading-card">
+              <p class="eyebrow">Workflow</p>
+              <div class="skeleton-stack">
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line skeleton-line-sm"></div>
+                <div class="skeleton skeleton-line skeleton-line-sm"></div>
+              </div>
+            </article>
+          </aside>
+        </section>
+      </template>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
