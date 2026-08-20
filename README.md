@@ -1,4 +1,4 @@
-# Healthcare Agent
+# ClinAssit Agentic AI
 
 A LangGraph-powered healthcare agent with a FastAPI backend and a polished server-rendered web UI. It accepts a healthcare question, routes it through a small agent workflow, retrieves PubMed-backed context when needed, and returns a structured answer with sources, confidence, and safety guidance.
 
